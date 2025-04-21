@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sfida Velocità</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    td, th {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      width: 50px;
+      cursor: pointer;
+    }
+    td.active {
+      background-color: #2196F3; /* blu */
+      color: white;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<h2 style="text-align:center;">Sfida di Velocità: 0 - 50 km/h</h2>
+<table id="speedTable">
+  <thead>
+    <tr>
+      <th>Velocità</th>
+      <th>Denis</th>
+      <th>Amarildo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Righe generate via JS -->
+  </tbody>
+</table>
+
+<script>
+  // Configurazione Firebase
+  const firebaseConfig = {
+    databaseURL: "https://sfida-velocita-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const utenti = ["denis", "amarildo"];
+  const start = 0;
+  const end = 50;
+  const tbody = document.querySelector("#speedTable tbody");
+
+  // Crea le righe della tabella
+  for (let v = start; v <= end; v++) {
+    const row = document.createElement("tr");
+    const speedCell = document.createElement("td");
+    speedCell.textContent = v + " km/h";
+    row.appendChild(speedCell);
+
+    utenti.forEach(user => {
+      const cell = document.createElement("td");
+      const cellId = `${user}/${v}`;
+      cell.id = cellId;
+      cell.addEventListener("click", () => {
+        const ref = db.ref(cellId);
+        ref.once("value").then(snapshot => {
+          const isActive = snapshot.val();
+          ref.set(!isActive);
+        });
+      });
+      row.appendChild(cell);
+    });
+
+    tbody.appendChild(row);
+  }
+
+  // Ascolta aggiornamenti in tempo reale
+  utenti.forEach(user => {
+    for (let v = start; v <= end; v++) {
+      const cellId = `${user}/${v}`;
+      const ref = db.ref(cellId);
+      ref.on("value", snapshot => {
+        const cell = document.getElementById(cellId);
+        if (snapshot.val()) {
+          cell.classList.add("active");
+        } else {
+          cell.classList.remove("active");
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
