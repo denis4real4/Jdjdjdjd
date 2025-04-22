@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tabella 0-50 in tempo reale</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      margin: 20px;
+    }
+    td, th {
+      border: 1px solid black;
+      padding: 10px;
+      text-align: center;
+      width: 80px;
+      height: 40px;
+    }
+    .blu {
+      background-color: blue;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tabella velocità da 0 a 50</h2>
+  <table id="tabella-0-50">
+    <thead>
+      <tr>
+        <th>Velocità</th>
+        <th>Denis</th>
+        <th>Amarildo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Le righe da 0 a 50 verranno generate automaticamente -->
+    </tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      databaseURL: "https://sfida-velocita-default-rtdb.europe-west1.firebasedatabase.app/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const tabellaRef = ref(db, 'velocita0_50_verticale');
+
+    const tbody = document.querySelector('#tabella-0-50 tbody');
+
+    // Crea le righe da 0 a 50
+    for (let i = 0; i <= 50; i++) {
+      const tr = document.createElement('tr');
+      const tdVelocita = document.createElement('td');
+      tdVelocita.textContent = i;
+
+      const tdDenis = document.createElement('td');
+      tdDenis.dataset.nome = 'Denis';
+      tdDenis.dataset.velocita = i;
+
+      const tdAmarildo = document.createElement('td');
+      tdAmarildo.dataset.nome = 'Amarildo';
+      tdAmarildo.dataset.velocita = i;
+
+      tr.appendChild(tdVelocita);
+      tr.appendChild(tdDenis);
+      tr.appendChild(tdAmarildo);
+      tbody.appendChild(tr);
+    }
+
+    // Aggiungi listener clic su ogni cella
+    document.querySelectorAll('#tabella-0-50 td[data-nome]').forEach(cella => {
+      cella.addEventListener('click', () => {
+        const nome = cella.dataset.nome;
+        const velocita = cella.dataset.velocita;
+        set(ref(db, `velocita0_50_verticale/${velocita}/${nome}`), true);
+      });
+    });
+
+    // Aggiorna tabella in tempo reale
+    onValue(tabellaRef, snapshot => {
+      const dati = snapshot.val();
+      document.querySelectorAll('#tabella-0-50 td[data-nome]').forEach(cella => {
+        const nome = cella.dataset.nome;
+        const velocita = cella.dataset.velocita;
+        if (dati && dati[velocita] && dati[velocita][nome]) {
+          cella.classList.add('blu');
+        } else {
+          cella.classList.remove('blu');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
